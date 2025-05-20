@@ -109,12 +109,21 @@ export const useSellerMarkers = ({ map, sellers }: UseSellerMarkersProps) => {
       updateSellerMarkers();
     };
 
+    // 지도 클릭 시 열려있는 툴팁 닫기
+    const closeInfoWindowOnMapClick = () => {
+      if (infoWindowRef.current) {
+        infoWindowRef.current.close();
+      }
+    };
+
     window.kakao.maps.event.addListener(map, 'bounds_changed', updateMarkersOnMapChange);
     window.kakao.maps.event.addListener(map, 'zoom_changed', updateMarkersOnMapChange);
+    window.kakao.maps.event.addListener(map, 'click', closeInfoWindowOnMapClick);
 
     return () => {
       window.kakao.maps.event.removeListener(map, 'bounds_changed', updateMarkersOnMapChange);
       window.kakao.maps.event.removeListener(map, 'zoom_changed', updateMarkersOnMapChange);
+      window.kakao.maps.event.removeListener(map, 'click', closeInfoWindowOnMapClick);
     };
   }, [map, updateSellerMarkers]);
 

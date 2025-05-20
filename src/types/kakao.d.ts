@@ -6,6 +6,16 @@ interface LatLng {
 interface MapOptions {
   center: LatLng;
   level: number;
+  draggable?: boolean;
+  scrollwheel?: boolean;
+  disableDoubleClickZoom?: boolean;
+  disableDoubleTapZoom?: boolean;
+  keyboardShortcuts?: boolean;
+  zoomable?: boolean;
+  mapTypeId?: number;
+  mapTypeControl?: boolean;
+  zoomControl?: boolean;
+  scaleControl?: boolean;
 }
 
 interface MarkerOptions {
@@ -64,6 +74,18 @@ declare global {
         InfoWindow: new (options: InfoWindowOptions) => KakaoInfoWindow;
         MarkerClusterer: new (options: MarkerClustererOptions) => KakaoMarkerClusterer;
         Size: new (width: number, height: number) => Size;
+        ZoomControl: new () => any;
+        ControlPosition: {
+          RIGHT: number;
+          TOP: number;
+          BOTTOM: number;
+          LEFT: number;
+        };
+        MapTypeId: {
+          ROADMAP: number;
+          SKYVIEW: number;
+          HYBRID: number;
+        };
         event: {
           addListener: (target: unknown, type: string, handler: () => void) => void;
           removeListener: (target: unknown, type: string, handler: () => void) => void;
@@ -82,6 +104,7 @@ export interface KakaoMap {
   };
   getLevel: () => number;
   setLevel: (level: number) => void;
+  addControl: (control: any, position: number) => void;
 }
 
 export interface KakaoMarker {

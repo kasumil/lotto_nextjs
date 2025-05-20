@@ -1,7 +1,9 @@
-import type { NextConfig } from "next";
+import { NextConfig } from 'next';
 
-const nextConfig: NextConfig = {
-  /* config options here */
-};
+const config: NextConfig = {
+  images: {
+    domains: ['dapi.kakao.com'],
+  },
+}
 
-export default nextConfig;
+export default config;

@@ -78,3 +78,6 @@ MIT License
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+
+docker buildx build --platform=linux/amd64,linux/arm64 -t ghcr.io/kasumil/lotto-nextjs:1.0.0 .
