@@ -7,7 +7,7 @@ module.exports = {
       args: "start",
       env: {
         NODE_ENV: "production",
-        PORT: 4200,
+        PORT: 4100,
       },
     },
   ],

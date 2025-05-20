@@ -32,7 +32,7 @@ COPY --from=builder /app/node_modules ./node_modules
 RUN npm install -g pm2
 
 # Expose port
-EXPOSE 4200
+EXPOSE 4100
 
 # Start the application with PM2
 WORKDIR /app

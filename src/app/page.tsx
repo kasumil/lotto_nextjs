@@ -55,7 +55,6 @@ function MapPage() {
   useEffect(() => {
     if (map) {
       updateCurrentLocationMarker(location);
-      map.setCenter(new window.kakao.maps.LatLng(location.lat, location.lng));
     }
   }, [location, map, updateCurrentLocationMarker]);
 
