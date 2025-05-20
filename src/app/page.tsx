@@ -10,6 +10,7 @@ import { useCurrentLocation } from '@/hooks/useCurrentLocation';
 import { useSellerMarkers } from '@/hooks/useSellerMarkers';
 import { MapControls } from '@/components/MapControls';
 import { MapError } from '@/components/MapError';
+import { KakaoMarker } from '@/types/kakao';
 
 const MapComponent = dynamic(() => Promise.resolve(MapPage), {
   ssr: false,
@@ -22,23 +23,25 @@ function MapPage() {
   const { map } = useKakaoMap({ mapRef, location });
   const sellers = useSellers();
   const [isSdkError, setIsSdkError] = useState(false);
+  const [currentMarker, setCurrentMarker] = useState<KakaoMarker | null>(null);
 
-  // 현재 위치 마커 업데이트
+  const handleSdkError = useCallback(() => {
+    setIsSdkError(true);
+  }, []);
+
   const updateCurrentLocationMarker = useCallback((newLocation: { lat: number; lng: number }) => {
     if (!map) return;
-
     if (currentMarker) {
       currentMarker.setMap(null);
     }
-
     const marker = new window.kakao.maps.Marker({
       position: new window.kakao.maps.LatLng(newLocation.lat, newLocation.lng),
       map: map
     });
     setCurrentMarker(marker);
-  }, [map]);
+  }, [map, currentMarker]);
 
-  const { currentMarker, setCurrentMarker, handleGetCurrentLocation } = useCurrentLocation({
+  const { handleGetCurrentLocation } = useCurrentLocation({
     map,
     updateCurrentLocationMarker
   });
@@ -61,15 +64,11 @@ function MapPage() {
     updateSellerMarkers();
   }, [map, sellers, updateSellerMarkers]);
 
-  const handleSdkError = () => {
-    setIsSdkError(true);
-  };
-
   return (
     <>
       <Script
-        src="//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_APP_KEY&libraries=services,clusterer"
-        strategy="beforeInteractive"
+        src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY}&libraries=services,clusterer`}
+        strategy="lazyOnload"
         onError={handleSdkError}
       />
       <div className='w-screen h-screen relative'>
