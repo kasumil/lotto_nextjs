@@ -80,4 +80,4 @@ MIT License
 5. Open a Pull Request
 
 
-docker buildx build --platform=linux/amd64,linux/arm64 -t ghcr.io/kasumil/lotto-nextjs:1.0.0 .
+docker buildx build --platform=linux/amd64,linux/arm64 -t ghcr.io/kasumil/lotto-nextjs:1.0.11 .

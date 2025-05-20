@@ -74,7 +74,7 @@ declare global {
         InfoWindow: new (options: InfoWindowOptions) => KakaoInfoWindow;
         MarkerClusterer: new (options: MarkerClustererOptions) => KakaoMarkerClusterer;
         Size: new (width: number, height: number) => Size;
-        ZoomControl: new () => any;
+        ZoomControl: new () => object;
         ControlPosition: {
           RIGHT: number;
           TOP: number;
@@ -104,7 +104,7 @@ export interface KakaoMap {
   };
   getLevel: () => number;
   setLevel: (level: number) => void;
-  addControl: (control: any, position: number) => void;
+  addControl: (control: object, position: number) => void;
 }
 
 export interface KakaoMarker {

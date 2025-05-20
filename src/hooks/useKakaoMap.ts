@@ -46,7 +46,7 @@ export const useKakaoMap = ({ mapRef, location }: UseKakaoMapProps) => {
     };
 
     loadKakaoMap();
-  }, [mapRef]);
+  }, [mapRef, location.lat, location.lng]);
 
   // 초기 위치 설정 (첫 로드시에만)
   useEffect(() => {
@@ -54,7 +54,7 @@ export const useKakaoMap = ({ mapRef, location }: UseKakaoMapProps) => {
     
     map.setCenter(new window.kakao.maps.LatLng(location.lat, location.lng));
     isInitialLoad.current = false;
-  }, [map, location]);
+  }, [map, location.lat, location.lng]);
 
   return { map, isMapLoaded };
 }; 
