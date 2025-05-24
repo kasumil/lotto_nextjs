@@ -15,7 +15,7 @@ export const useKakaoMap = ({ mapRef, location }: UseKakaoMapProps) => {
   const isInitialLoad = useRef(true);
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef?.current) return;
 
     const loadKakaoMap = () => {
       window.kakao.maps.load(() => {
@@ -52,7 +52,7 @@ export const useKakaoMap = ({ mapRef, location }: UseKakaoMapProps) => {
   useEffect(() => {
     if (!map || !isInitialLoad.current) return;
     
-    map.setCenter(new window.kakao.maps.LatLng(location.lat, location.lng));
+    map.setCenter(new window.kakao.maps.LatLng(location?.lat, location?.lng));
     isInitialLoad.current = false;
   }, [map, location]);
 
