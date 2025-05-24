@@ -9,7 +9,6 @@ import { useSellers } from '@/hooks/useSellers';
 import { useCurrentLocation } from '@/hooks/useCurrentLocation';
 import { useSellerMarkers } from '@/hooks/useSellerMarkers';
 import { MapControls } from '@/components/MapControls';
-import { MapError } from '@/components/MapError';
 import { KakaoMarker } from '@/types/kakao';
 
 const MapComponent = dynamic(() => Promise.resolve(MapPage), {
@@ -22,12 +21,8 @@ function MapPage() {
   const location = useLocation();
   const { map } = useKakaoMap({ mapRef, location });
   const sellers = useSellers();
-  const [isSdkError, setIsSdkError] = useState(false);
   const [currentMarker, setCurrentMarker] = useState<KakaoMarker | null>(null);
 
-  const handleSdkError = useCallback(() => {
-    setIsSdkError(true);
-  }, []);
 
   const updateCurrentLocationMarker = useCallback((newLocation: { lat: number; lng: number }) => {
     if (!map) return;
@@ -68,22 +63,17 @@ function MapPage() {
       <Script
         src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY}&libraries=services,clusterer`}
         strategy="lazyOnload"
-        onError={handleSdkError}
       />
       <div className='w-screen h-screen relative'>
-        {isSdkError ? (
-          <MapError />
-        ) : (
-          <>
-            <div 
-              ref={mapRef}
-              className='w-full h-full bg-white'
-            />
-            <MapControls 
-              onGetCurrentLocation={handleGetCurrentLocation}
-            />
-          </>
-        )}
+        <>
+          <div 
+            ref={mapRef}
+            className='w-full h-full bg-white'
+          />
+          <MapControls 
+            onGetCurrentLocation={handleGetCurrentLocation}
+          />
+        </>
       </div>
     </>
   );
