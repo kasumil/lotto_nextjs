@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import Script from 'next/script';
 import { useKakaoMap } from '@/hooks/useKakaoMap';
@@ -21,20 +21,20 @@ function MapPage() {
   const location = useLocation();
   const { map } = useKakaoMap({ mapRef, location });
   const sellers = useSellers();
-  const [currentMarker, setCurrentMarker] = useState<KakaoMarker | null>(null);
+  const currentMarker = useRef<KakaoMarker | null>(null);
 
 
   const updateCurrentLocationMarker = useCallback((newLocation: { lat: number; lng: number }) => {
     if (!map) return;
-    if (currentMarker) {
-      currentMarker.setMap(null);
+    if (currentMarker.current) {
+      currentMarker.current.setMap(null);
     }
     const marker = new window.kakao.maps.Marker({
       position: new window.kakao.maps.LatLng(newLocation.lat, newLocation.lng),
       map: map
     });
-    setCurrentMarker(marker);
-  }, [map, currentMarker]);
+    currentMarker.current = marker;
+  }, [map]);
 
   const { handleGetCurrentLocation } = useCurrentLocation({
     map,

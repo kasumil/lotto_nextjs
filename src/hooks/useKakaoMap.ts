@@ -13,6 +13,7 @@ export const useKakaoMap = ({ mapRef, location }: UseKakaoMapProps) => {
   const [map, setMap] = useState<KakaoMap | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const isInitialLoad = useRef(true);
+  const initialLocation = useRef(location);
 
   useEffect(() => {
     if (!mapRef?.current) return;
@@ -20,7 +21,7 @@ export const useKakaoMap = ({ mapRef, location }: UseKakaoMapProps) => {
     const loadKakaoMap = () => {
       window.kakao.maps.load(() => {
         const options = {
-          center: new window.kakao.maps.LatLng(location.lat, location.lng),
+          center: new window.kakao.maps.LatLng(initialLocation.current.lat, initialLocation.current.lng),
           level: 3,
           draggable: true,
           scrollwheel: true,

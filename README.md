@@ -81,3 +81,12 @@ MIT License
 
 
 docker buildx build --platform=linux/amd64,linux/arm64 -t ghcr.io/kasumil/lotto-nextjs:1.0.0 .
+
+## 보안 패치 및 GHCR 배포
+
+- Next.js 16.4.1, React 19.2.6과 Node 22 기반 이미지를 사용합니다.
+- `npm ci`, `npm run lint`, `npm run build`, `npm audit --omit=dev`로 검증합니다.
+- GitHub Actions 변수 `NEXT_PUBLIC_KAKAO_MAP_API_KEY`가 있어야 지도용 빌드를 게시할 수 있습니다. 공개 브라우저 키이므로 Kakao에서 서비스 도메인 제한을 설정합니다. 실제 키를 저장소에 기록하지 않습니다.
+- main 반영 후 GHCR에 latest 및 커밋 SHA 태그를 게시합니다. NAS가 이전 고정 태그 `1.0.13`을 사용하면 latest 이미지 게시만으로 갱신되지 않습니다. 검증된 새 SHA/digest로 전환하고 실제 컨테이너 버전을 확인해야 합니다.
+- 런타임은 비특권 node 사용자로 4100 포트에서 직접 Next.js를 실행하며 개발 의존성과 전역 PM2를 이미지에 포함하지 않습니다.
+- 개발 의존성 minimatch 관련 moderate 경고는 별도로 남을 수 있습니다. 운영 의존성 0개 결과가 NAS 운영체제나 실제 침해 여부까지 보장하지는 않습니다.
