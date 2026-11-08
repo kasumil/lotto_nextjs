@@ -32,7 +32,6 @@ jobs:
           cache: npm
 
       - name: Require Kakao Maps build variable
-        if: github.event_name != 'pull_request'
         run: |
           if [ -z "$NEXT_PUBLIC_KAKAO_MAP_API_KEY" ]; then
             echo "Set the repository Actions variable NEXT_PUBLIC_KAKAO_MAP_API_KEY before building."
