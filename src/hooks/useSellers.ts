@@ -1,22 +1,17 @@
 import { useEffect, useState } from 'react';
-
-export interface LottoSeller {
-  BPLCDORODTLADRES: string;
-  FIRMNM: string;
-  LATITUDE: number;
-  LONGITUDE: number;
-  RTLRSTRTELNO: string;
-}
+import { sellerCache, type LottoSeller } from '@/lib/seller-cache';
+export type { LottoSeller } from '@/lib/seller-cache';
 
 export const useSellers = () => {
   const [sellers, setSellers] = useState<LottoSeller[]>([]);
 
   useEffect(() => {
-    fetch('/lotto_sellers.json')
-      .then(res => res.json())
-      .then(data => setSellers(data))
-      .catch(error => console.error('판매점 데이터 로드 실패:', error));
+    let active = true;
+    sellerCache.load()
+      .then((data) => { if (active) setSellers(data); })
+      .catch(() => console.error('판매점 데이터를 불러오지 못했습니다.'));
+    return () => { active = false; };
   }, []);
 
   return sellers;
-}; 
+};

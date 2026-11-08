@@ -42,7 +42,7 @@ function MapPage() {
     updateCurrentLocationMarker
   });
 
-  const { updateSellerMarkers } = useSellerMarkers({
+  useSellerMarkers({
     map,
     sellers
   });
@@ -53,11 +53,6 @@ function MapPage() {
       updateCurrentLocationMarker(location);
     }
   }, [location, map, updateCurrentLocationMarker]);
-
-  // 판매점 마커 업데이트
-  useEffect(() => {
-    updateSellerMarkers();
-  }, [map, sellers, updateSellerMarkers]);
 
   return (
     <>
