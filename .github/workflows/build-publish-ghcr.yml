@@ -14,7 +14,6 @@ permissions:
 
 env:
   IMAGE_NAME: ghcr.io/kasumil/lotto-nextjs
-  NEXT_PUBLIC_KAKAO_MAP_API_KEY: ${{ vars.NEXT_PUBLIC_KAKAO_MAP_API_KEY }}
 
 jobs:
   verify:
@@ -30,16 +29,6 @@ jobs:
         with:
           node-version: 22
           cache: npm
-
-      - name: Require Kakao Maps build variable
-        run: |
-          if [ -z "$NEXT_PUBLIC_KAKAO_MAP_API_KEY" ]; then
-            echo "Set the repository Actions variable NEXT_PUBLIC_KAKAO_MAP_API_KEY before building."
-            exit 1
-          fi
-
-      - name: Prepare public build variable
-        run: printf 'NEXT_PUBLIC_KAKAO_MAP_API_KEY=%s\n' "$NEXT_PUBLIC_KAKAO_MAP_API_KEY" > .env.production
 
       - name: Install dependencies
         run: npm ci
@@ -62,11 +51,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Prepare public build variable
-        env:
-          NEXT_PUBLIC_KAKAO_MAP_API_KEY: ${{ vars.NEXT_PUBLIC_KAKAO_MAP_API_KEY }}
-        run: printf 'NEXT_PUBLIC_KAKAO_MAP_API_KEY=%s\n' "$NEXT_PUBLIC_KAKAO_MAP_API_KEY" > .env.production
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

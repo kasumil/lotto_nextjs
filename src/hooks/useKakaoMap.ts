@@ -1,5 +1,6 @@
 import { useEffect, useState, RefObject, useRef } from 'react';
 import { KakaoMap } from '@/types/kakao';
+import { useKakaoSdk } from '@/components/KakaoSdkProvider';
 
 interface UseKakaoMapProps {
   mapRef: RefObject<HTMLDivElement | null>;
@@ -10,13 +11,14 @@ interface UseKakaoMapProps {
 }
 
 export const useKakaoMap = ({ mapRef, location }: UseKakaoMapProps) => {
+  const { ready } = useKakaoSdk();
   const [map, setMap] = useState<KakaoMap | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const isInitialLoad = useRef(true);
   const initialLocation = useRef(location);
 
   useEffect(() => {
-    if (!mapRef?.current) return;
+    if (!ready || !mapRef?.current) return;
 
     const loadKakaoMap = () => {
       window.kakao.maps.load(() => {
@@ -47,7 +49,7 @@ export const useKakaoMap = ({ mapRef, location }: UseKakaoMapProps) => {
     };
 
     loadKakaoMap();
-  }, [mapRef]);
+  }, [mapRef, ready]);
 
   // 초기 위치 설정 (첫 로드시에만)
   useEffect(() => {

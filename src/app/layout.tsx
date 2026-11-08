@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Script from "next/script";
+import { connection } from "next/server";
+import { KakaoSdkProvider } from "@/components/KakaoSdkProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -10,17 +11,19 @@ export const metadata: Metadata = {
   description: "내 주변 로또 판매점을 찾아보세요",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  await connection();
+  const appKey = ["KAKAO_APP_KEY", "NEXT_PUBLIC_KAKAO_APP_KEY", "NEXT_PUBLIC_KAKAO_MAP_API_KEY"]
+    .map((name) => process.env[name]?.trim())
+    .find(Boolean);
+
   return (
     <html lang="ko">
-      <head>
-        <Script src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_APP_KEY}&autoload=false&libraries=services,clusterer`} strategy="beforeInteractive"></Script>
-      </head>
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}><KakaoSdkProvider appKey={appKey}>{children}</KakaoSdkProvider></body>
     </html>
   );
 }
