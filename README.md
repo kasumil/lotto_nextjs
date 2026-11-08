@@ -57,6 +57,15 @@ pm2 start ecosystem.config.js
 
 ## 배포
 
+### GHCR 이미지 자동 빌드
+
+- `main`에 반영되면 앱 빌드 검증 후 `ghcr.io/kasumil/lotto-nextjs` 이미지를 멀티 플랫폼으로 빌드해 GHCR에 게시합니다.
+- 이미지 태그는 `latest`, 커밋 SHA, 그리고 GitHub Actions 실행 번호입니다.
+- Pull Request에서는 앱 빌드만 검증하고 이미지는 게시하지 않습니다.
+- GitHub 저장소의 **Settings → Secrets and variables → Actions → Variables**에 `NEXT_PUBLIC_KAKAO_MAP_API_KEY` 변수를 등록해야 합니다.
+
+기존 수동 스크립트 `./build.sh`도 사용할 수 있으며, 버전 태그와 `latest`를 함께 게시합니다.
+
 1. Vercel 배포
 ```bash
 vercel
@@ -78,6 +87,3 @@ MIT License
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
-
-docker buildx build --platform=linux/amd64,linux/arm64 -t ghcr.io/kasumil/lotto-nextjs:1.0.0 .
