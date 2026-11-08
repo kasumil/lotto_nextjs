@@ -6,6 +6,10 @@ import { KakaoSdkProvider } from "@/components/KakaoSdkProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
+function getRuntimeMapJavascriptKey(name: string) {
+  return process.env[name]?.trim();
+}
+
 export const metadata: Metadata = {
   title: "로또 판매점 지도",
   description: "내 주변 로또 판매점을 찾아보세요",
@@ -17,9 +21,8 @@ export default async function RootLayout({
   children: React.ReactNode
 }) {
   await connection();
-  const appKey = ["KAKAO_APP_KEY", "NEXT_PUBLIC_KAKAO_APP_KEY", "NEXT_PUBLIC_KAKAO_MAP_API_KEY"]
-    .map((name) => process.env[name]?.trim())
-    .find(Boolean);
+  // Only an explicitly configured Maps JavaScript key may reach the browser.
+  const appKey = getRuntimeMapJavascriptKey("NEXT_PUBLIC_KAKAO_MAP_API_KEY");
 
   return (
     <html lang="ko">
