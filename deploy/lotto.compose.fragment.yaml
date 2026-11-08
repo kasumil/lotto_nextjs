@@ -1,0 +1,17 @@
+# Overlay fragment for the existing kasumil-platform Synology project.
+# Include it alongside that project's current Compose file; do not deploy as
+# a separate project, or it will not share the existing bridge network.
+services:
+  lotto:
+    image: ghcr.io/kasumil/lotto-nextjs:latest
+    ports:
+      - "4100:4100"
+    restart: unless-stopped
+    pull_policy: always
+    networks:
+      - kasumil-platform
+
+networks:
+  kasumil-platform:
+    external: true
+    name: kasumil-platform_default

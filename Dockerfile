@@ -1,11 +1,11 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 # Install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -14,13 +14,13 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 
 WORKDIR /app
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=4200
+ENV PORT=4100
 
 # Copy only necessary files
 COPY --from=builder /app/.next ./.next
@@ -33,6 +33,9 @@ RUN npm install -g pm2
 
 # Expose port
 EXPOSE 4100
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:4100/').then(r => process.exit(r.status >= 200 && r.status < 400 ? 0 : 1)).catch(() => process.exit(1))"]
 
 # Start the application with PM2
 WORKDIR /app
