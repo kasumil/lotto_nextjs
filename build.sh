@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # 저장된 버전 파일 경로
 VERSION_FILE="version.txt"
@@ -23,8 +24,9 @@ NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 # 파일에 새 버전 저장
 echo "$NEW_VERSION" > "$VERSION_FILE"
 
-# 이미지 이름 (prefix 경로 수정 주의)
-IMAGE_NAME="ghcr.io/kasumil/lotto-nextjs:$NEW_VERSION"
+# 이미지 이름
+IMAGE_BASE="ghcr.io/kasumil/lotto-nextjs"
+IMAGE_NAME="$IMAGE_BASE:$NEW_VERSION"
 
 echo "🔧 Building and pushing Docker image: $IMAGE_NAME"
 
@@ -32,7 +34,8 @@ echo "🔧 Building and pushing Docker image: $IMAGE_NAME"
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
   -t "$IMAGE_NAME" \
+  -t "$IMAGE_BASE:latest" \
   --push \
   .
 
-echo "✅ Done! Image pushed: $IMAGE_NAME"
+echo "✅ Done! Image pushed: $IMAGE_NAME and $IMAGE_BASE:latest"
