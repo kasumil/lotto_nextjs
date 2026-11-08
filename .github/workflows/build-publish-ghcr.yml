@@ -36,6 +36,9 @@ jobs:
       - name: Lint source
         run: npm run lint
 
+      - name: Verify seller cache
+        run: npm run test:seller-cache
+
       - name: Build Next.js
         run: npm run build
 

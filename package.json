@@ -6,7 +6,10 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "prebuild": "node scripts/build-seller-map-data.mjs",
+    "predev": "node scripts/build-seller-map-data.mjs",
+    "test:seller-cache": "node --experimental-strip-types scripts/test-seller-cache.mjs"
   },
   "dependencies": {
     "next": "16.4.1",
