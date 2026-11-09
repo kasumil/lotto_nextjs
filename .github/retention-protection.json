@@ -1,0 +1,10 @@
+{
+  "package": "ghcr.io/kasumil/lotto-nextjs",
+  "captured_at": "2026-11-09T03:39:36.919039+00:00",
+  "source": "Live NAS running and stopped container digest inventory",
+  "current": "sha256:5dbb93a950cfe5880896ab9169cb902bb6d73254c300d431eb40408cd71e1df3",
+  "previous": null,
+  "rollback": [
+    "sha256:c6523d95d729d9db528b110f8b1ce00bc00efe5f645b96bf039d745f8f901321"
+  ]
+}
