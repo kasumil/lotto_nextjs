@@ -28,6 +28,11 @@ MAX_FRESH_SECONDS = 900  # Deployment snapshot safety only. NEVER image expiry.
 class Unsafe(ValueError):
     pass
 
+class OrphanGraph(Unsafe):
+    def __init__(self, report):
+        super().__init__('Ambiguous orphan manifests: no candidate plan emitted')
+        self.report = report
+
 def check(ok, message):
     if not ok:
         raise Unsafe(message)
@@ -154,7 +159,24 @@ def graph(inv, manifests):
     check(not any(inv[d]['tags'] for d in incoming), 'Tagged dependency is ambiguous')
     groups = {r: closure({r}, edges) for r in roots}
     classified = set().union(*groups.values())
-    check(classified == set(inv), 'Ambiguous orphan manifests: no candidate plan emitted')
+    if classified != set(inv):
+        # Diagnostics only. Do not relax classification or emit candidate IDs.
+        raise OrphanGraph({
+            'mode': 'BLOCKED_DIAGNOSTIC_ONLY',
+            'orphan_digests': sorted(set(inv) - classified),
+            'tagged_root_groups': {r: sorted(g) for r, g in sorted(groups.items())},
+            'versions': [{
+                'digest': d, 'id': inv[d]['id'], 'tags': inv[d]['tags'],
+                'created_at': inv[d]['created_at'],
+                'media_type': manifests[d]['mediaType'],
+                'artifact_type': manifests[d].get('artifactType'),
+                'subject': manifests[d].get('subject', {}).get('digest'),
+                'index_children': sorted(index_edges[d]),
+                'retention_links': sorted(edges[d]),
+                'reachable_from_tagged_root': d in classified,
+            } for d in sorted(inv)],
+            'warning': 'Unclassified does not mean unused. No deletion plan emitted.',
+        })
     return edges, groups
 
 def closure(seeds, edges):
@@ -170,7 +192,13 @@ def plan(rows, manifests, protection, repo, now, final_rows):
     protected = protected_input(protection, repo, now)
     inv = inventory(rows)
     check(inv == inventory(final_rows), 'Inventory changed during scan; retry with fresh snapshot')
-    edges, groups = graph(inv, manifests)
+    try:
+        edges, groups = graph(inv, manifests)
+    except OrphanGraph as error:
+        error.report['protected_digests'] = sorted(protected)
+        error.report['protected_present_in_inventory'] = sorted(protected & set(inv))
+        error.report['protected_missing_from_inventory'] = sorted(protected - set(inv))
+        raise
     check(protected <= set(groups), 'Protected digest missing or not a release root')
     newest = sorted(groups, key=lambda d: (timestamp(inv[d]['created_at']), d), reverse=True)[:5]
     semantic = {r for r in groups if any(not MACHINE.fullmatch(t) for t in inv[r]['tags'])}
@@ -274,6 +302,8 @@ if __name__ == '__main__':
     try:
         main()
     except (Unsafe, ValueError, TypeError, KeyError, AttributeError) as error:
+        if isinstance(error, OrphanGraph):
+            print(json.dumps(error.report, indent=2))
         # Never include raw responses or credential-bearing exception strings.
         print('BLOCKED: ' + (str(error) if isinstance(error, Unsafe) else 'Malformed input or API data'), file=sys.stderr)
         sys.exit(1)
