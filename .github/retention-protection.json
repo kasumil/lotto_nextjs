@@ -1,7 +1,7 @@
 {
   "package": "ghcr.io/kasumil/lotto-nextjs",
-  "captured_at": "2026-11-09T03:39:36.919039+00:00",
-  "source": "Live NAS running and stopped container digest inventory",
+  "captured_at": "2026-11-09T04:04:44.595515+00:00",
+  "source": "Fresh read-only NAS Docker inspection of all running and stopped containers; Lotto current and named rollback container RepoDigests; neither has Compose file labels.",
   "current": "sha256:5dbb93a950cfe5880896ab9169cb902bb6d73254c300d431eb40408cd71e1df3",
   "previous": null,
   "rollback": [
