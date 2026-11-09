@@ -66,6 +66,26 @@ class RetentionTests(unittest.TestCase):
     def test_unknown_orphan_blocks_all(self):
         self.rows.append(row(8, [])); self.manifests[d(8)] = manifest()
         with self.assertRaises(r.Unsafe): self.plan()
+    def test_orphan_diagnostics_never_emit_candidates(self):
+        self.rows.append(row(8, [])); self.manifests[d(8)] = manifest()
+        with self.assertRaises(r.OrphanGraph) as caught:
+            self.plan()
+        report = caught.exception.report
+        self.assertEqual(report['mode'], 'BLOCKED_DIAGNOSTIC_ONLY')
+        self.assertEqual(report['orphan_digests'], [d(8)])
+        self.assertEqual(report['protected_missing_from_inventory'], [])
+        self.assertEqual(len(report['versions']), 8)
+        self.assertNotIn('candidate_versions', report)
+        self.assertNotIn('candidate_groups', report)
+
+    def test_untagged_index_diagnostics_include_whole_component(self):
+        self.rows.extend([row(8, []), row(9, [])])
+        self.manifests[d(8)] = {'schemaVersion': 2, 'mediaType': I, 'manifests': [desc(9)]}
+        self.manifests[d(9)] = manifest()
+        with self.assertRaises(r.OrphanGraph) as caught:
+            self.plan()
+        self.assertEqual(caught.exception.report['orphan_digests'], [d(8), d(9)])
+
     def test_missing_dependency_blocks_all(self):
         self.manifests[d(1)] = {'schemaVersion': 2, 'mediaType': I, 'manifests': [desc(500)]}
         with self.assertRaises(r.Unsafe): self.plan()
