@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
+# Run one publisher at a time; version replacement does not serialize concurrent builds.
 # Work relative to this script even when invoked from another directory.
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 VERSION_FILE="version.txt"
