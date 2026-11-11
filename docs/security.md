@@ -18,7 +18,8 @@
 2. linux/amd64와 linux/arm64 이미지를 각각 빌드하여 Docker 아카이브로 저장합니다. 아직 레지스트리에 게시하지 않습니다.
 3. 해당 아카이브의 전체 CVE를 검사하고 스캔 보고서, SHA256, config/manifest ID를 기록합니다.
 4. main에서만 모든 선행 job 성공 후 아카이브를 내려받습니다. 두 아카이브를 다시 검증하고 로드한 image ID까지 비교합니다. 이미지를 재빌드하지 않습니다.
-5. 검사한 아키텍처 이미지를 고유 후보 태그로 게시하고 반환된 digest를 묶어 커밋 SHA, 실행 번호, latest multi-platform manifest를 게시합니다.
+5. 검사한 아키텍처 이미지를 고유 후보 태그로 게시합니다. 반환된 immutable digest의 raw manifest SHA256과 config digest를 로컬 검사 아카이브와 대조하여 다른 이미지·플랫폼이 승격되지 않게 합니다.
+6. 두 개의 서로 다른 플랫폼 digest를 임시 multi-platform index로 만들고, index가 정확히 linux/amd64와 linux/arm64의 검증된 digest만 가리키는지 확인합니다. 검증한 index를 재빌드 없이 커밋 SHA, 실행 번호, latest로 복사하고 각 최종 태그의 digest도 다시 확인합니다.
 
 PR은 이미지를 검사하지만 GHCR 쓰기 권한이 없고 게시 job도 실행하지 않습니다. 전체 JSON 보고서는 실패 시에도 14일 보관합니다. 대용량 아카이브는 게시에 필요한 1일만 보관합니다.
 
