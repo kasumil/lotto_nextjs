@@ -39,6 +39,9 @@ jobs:
       - name: Verify seller cache
         run: npm run test:seller-cache
 
+      - name: Verify manual build failure handling
+        run: bash scripts/test-manual-build.sh
+
       - name: Build Next.js
         run: npm run build
 

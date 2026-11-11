@@ -1,38 +1,33 @@
 #!/bin/bash
+set -euo pipefail
 
-# 저장된 버전 파일 경로
+# Run one publisher at a time; version replacement does not serialize concurrent builds.
+# Work relative to this script even when invoked from another directory.
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 VERSION_FILE="version.txt"
-
-# 파일이 없으면 초기화
-if [ ! -f "$VERSION_FILE" ]; then
-  echo "1.0.0" > "$VERSION_FILE"
+CURRENT_VERSION="1.0.0"
+if [ -f "$VERSION_FILE" ]; then
+  CURRENT_VERSION=$(cat "$VERSION_FILE")
 fi
-
-# 현재 버전 읽기
-CURRENT_VERSION=$(cat "$VERSION_FILE")
-
-# 버전 분리 (MAJOR.MINOR.PATCH)
-IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
-
-# PATCH 버전 증가
-PATCH=$((PATCH + 1))
-
-# 새 버전 생성
-NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-
-# 파일에 새 버전 저장
-echo "$NEW_VERSION" > "$VERSION_FILE"
-
-# 이미지 이름 (prefix 경로 수정 주의)
+if [[ ! "$CURRENT_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+  echo "Invalid version.txt: expected MAJOR.MINOR.PATCH" >&2
+  exit 1
+fi
+MAJOR="${BASH_REMATCH[1]}"
+MINOR="${BASH_REMATCH[2]}"
+PATCH="${BASH_REMATCH[3]}"
+NEW_VERSION="$MAJOR.$MINOR.$((10#$PATCH + 1))"
 IMAGE_NAME="ghcr.io/kasumil/lotto-nextjs:$NEW_VERSION"
 
-echo "🔧 Building and pushing Docker image: $IMAGE_NAME"
-
-# Docker buildx 빌드 및 푸시
+# Prepare local state before publishing, but commit it only after Docker succeeds.
+VERSION_TEMP=$(mktemp "${VERSION_FILE}.tmp.XXXXXX")
+trap 'rm -f -- "$VERSION_TEMP"' EXIT
+printf '%s\n' "$NEW_VERSION" > "$VERSION_TEMP"
+echo "Building and pushing Docker image: $IMAGE_NAME"
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
   -t "$IMAGE_NAME" \
   --push \
   .
-
-echo "✅ Done! Image pushed: $IMAGE_NAME"
+mv -- "$VERSION_TEMP" "$VERSION_FILE"
+echo "Done! Image pushed: $IMAGE_NAME"
