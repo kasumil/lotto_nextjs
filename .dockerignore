@@ -36,4 +36,7 @@ Dockerfile
 # Misc
 README.md
 LICENSE
-*.log 
+*.log
+# Never bake scan output or archives into an image
+security-reports
+security-images

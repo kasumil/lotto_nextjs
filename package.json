@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "prebuild": "node scripts/build-seller-map-data.mjs",
     "predev": "node scripts/build-seller-map-data.mjs",
-    "test:seller-cache": "node --experimental-strip-types scripts/test-seller-cache.mjs"
+    "test:seller-cache": "node --experimental-strip-types scripts/test-seller-cache.mjs",
+    "security:audit": "node scripts/audit-dependencies.mjs",
+    "test:security": "node --test scripts/test-security-*.mjs"
   },
   "dependencies": {
     "next": "16.4.1",
@@ -27,5 +29,10 @@
     "eslint-config-next": "16.4.1",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "11.0.1"
+    }
   }
 }

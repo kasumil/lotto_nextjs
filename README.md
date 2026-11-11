@@ -11,7 +11,7 @@
 
 ## 기술 스택
 
-- Next.js 14
+- Next.js 16.4.1
 - TypeScript
 - Kakao Maps API
 - Tailwind CSS
@@ -89,7 +89,8 @@ docker buildx build --platform=linux/amd64,linux/arm64 -t ghcr.io/kasumil/lotto-
 - 지도 키는 Docker 실행 시 환경변수로 주입합니다. `NEXT_PUBLIC_KAKAO_MAP_API_KEY`에 지정된 Kakao Maps JavaScript 키만 서버에서 읽습니다. 일반 앱 키 이름이나 REST API·Admin·네이티브 키로 자동 대체하지 않습니다. 기존 다른 이름의 값은 Kakao Maps용 JavaScript 키인지 확인한 뒤 이 지도 전용 변수에 매핑합니다. 빌드할 때 키를 넣거나 GitHub Actions 변수를 새로 만들 필요가 없습니다. 공개 브라우저 키이므로 Kakao에서 서비스 도메인 제한을 설정하고 실제 값을 저장소에 기록하지 않습니다. SDK는 한 번만 로드하고 준비된 뒤 지도를 생성합니다.
 - main 반영 후 GHCR에 latest 및 커밋 SHA 태그를 게시합니다. NAS가 이전 고정 태그 `1.0.13`을 사용하면 latest 이미지 게시만으로 갱신되지 않습니다. 검증된 새 SHA/digest로 전환하고 실제 컨테이너 버전을 확인해야 합니다.
 - 런타임은 비특권 node 사용자로 4100 포트에서 직접 Next.js를 실행하며 개발 의존성과 전역 PM2를 이미지에 포함하지 않습니다.
-- 개발 의존성 minimatch 관련 moderate 경고는 별도로 남을 수 있습니다. 운영 의존성 0개 결과가 NAS 운영체제나 실제 침해 여부까지 보장하지는 않습니다.
+- 개발용 TypeScript ESLint 경로의 minimatch는 보안 패치 11.0.1로 제한 교체했습니다. `npm run security:audit`가 전체/운영 lockfile을 모두 검사하고 Low 이상 또는 검사 오류가 있으면 실패합니다.
+- Docker 런타임은 npm/npx/yarn을 제거하고 zlib 보안 패치를 적용합니다. CI와 수동 `build.sh`는 amd64/arm64의 실제 이미지 아카이브를 Trivy로 검사하고, 모든 심각도의 CVE가 0개일 때만 동일 아카이브를 게시합니다. 자세한 절차와 한계는 [보안 검사](docs/security.md)를 참고하세요.
 
 
 ## 공개 판매점 데이터 캐시
