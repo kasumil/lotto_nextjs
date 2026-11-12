@@ -1,0 +1,17 @@
+{
+  "description": "Read-only repository context. No deployment, credentials, Git mutation or network access.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -B \"$(git rev-parse --show-toplevel)/.codex/hooks/session_start.py\"",
+            "timeout": 5,
+            "statusMessage": "\uc800\uc7a5\uc18c \uac80\uc99d \uc548\ub0b4 \uc77d\uae30"
+          }
+        ]
+      }
+    ]
+  }
+}
