@@ -46,3 +46,8 @@ next-env.d.ts
 # Local security artifacts
 security-reports/
 security-images/
+
+# Local-only AI E2E install state and synthetic reports
+/.ai-e2e-kit/
+/.ai-e2e-results/
+/.ai-e2e.local.json
