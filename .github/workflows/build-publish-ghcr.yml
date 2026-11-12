@@ -19,7 +19,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  scope:
+    name: Classify release scope (fail closed)
+    runs-on: ubuntu-latest
+    outputs:
+      required: ${{ steps.scope.outputs.required }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: python3 scripts/test-release-scope.py
+      - id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python3 scripts/release-scope.py
+
   verify:
+    needs: scope
+    if: needs.scope.outputs.required == 'true'
     name: App and dependency security
     runs-on: ubuntu-latest
     steps:
@@ -45,6 +65,8 @@ jobs:
           retention-days: 14
 
   image-security:
+    needs: scope
+    if: needs.scope.outputs.required == 'true'
     name: Image CVEs (${{ matrix.arch }}, all severities)
     runs-on: ubuntu-latest
     strategy:
@@ -91,8 +113,8 @@ jobs:
 
   publish:
     name: Publish only the scanned multi-platform images
-    needs: [verify, image-security]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [scope, verify, image-security]
+    if: needs.scope.outputs.required == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
