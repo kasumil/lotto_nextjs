@@ -43,6 +43,6 @@ export const MARKER_STYLES: MarkerStyle[] = [
 ];
 
 export const MARKER_IMAGE = {
-  src: "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png",
+  src: "/images/seller-marker.svg",
   size: { width: 24, height: 35 }
 }; 
