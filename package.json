@@ -11,7 +11,10 @@
     "predev": "node scripts/build-seller-map-data.mjs",
     "test:seller-cache": "node --experimental-strip-types scripts/test-seller-cache.mjs",
     "security:audit": "node scripts/audit-dependencies.mjs",
-    "test:security": "node --test scripts/test-security-*.mjs"
+    "test:security": "node --test scripts/test-security-*.mjs",
+    "test:ai": "node scripts/run-ai-e2e.mjs",
+    "test:ai:list": "node scripts/run-ai-e2e.mjs --list",
+    "test:ai:live": "node scripts/run-ai-e2e.mjs --live-local"
   },
   "dependencies": {
     "next": "16.4.1",
