@@ -19,7 +19,38 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  scope:
+    name: Classify release scope (fail closed)
+    runs-on: ubuntu-latest
+    outputs:
+      required: ${{ steps.scope.outputs.required }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        # Never execute the candidate HEAD classifier in the release decision.
+        # PR: trusted target SHA; push: previously deployed main SHA.
+        run: |
+          if [[ ! "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]] || [[ "$BASE_SHA" == 0000000000000000000000000000000000000000 ]]; then
+            echo 'required=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          TRUSTED_CLASSIFIER="$RUNNER_TEMP/trusted-release-scope.py"
+          if ! git show "$BASE_SHA:scripts/release-scope.py" > "$TRUSTED_CLASSIFIER"; then
+            echo 'required=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          python3 "$TRUSTED_CLASSIFIER"
+
   verify:
+    needs: scope
+    if: needs.scope.outputs.required == 'true'
     name: App and dependency security
     runs-on: ubuntu-latest
     steps:
@@ -28,6 +59,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - run: python3 scripts/test-release-scope.py
       - run: npm ci
       - run: npm run test:security
       - run: npm run security:audit
@@ -45,6 +77,8 @@ jobs:
           retention-days: 14
 
   image-security:
+    needs: scope
+    if: needs.scope.outputs.required == 'true'
     name: Image CVEs (${{ matrix.arch }}, all severities)
     runs-on: ubuntu-latest
     strategy:
@@ -91,8 +125,8 @@ jobs:
 
   publish:
     name: Publish only the scanned multi-platform images
-    needs: [verify, image-security]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [scope, verify, image-security]
+    if: needs.scope.outputs.required == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
