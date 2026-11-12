@@ -2,6 +2,9 @@ import importlib.util
 import unittest
 from unittest.mock import patch
 import subprocess
+import tempfile
+import os
+from pathlib import Path
 
 spec = importlib.util.spec_from_file_location('scope', __file__.replace('test-release-scope.py', 'release-scope.py'))
 scope = importlib.util.module_from_spec(spec)
@@ -43,6 +46,40 @@ class Tests(unittest.TestCase):
         for event in ['push','pull_request']:
             with patch.object(scope.subprocess,'run',return_value=subprocess.CompletedProcess([],0,raw('README.md'))):
                 self.assertFalse(scope.required(event,'a'*40,'b'*40))
+
+class TrustedBaseTests(unittest.TestCase):
+    def test_candidate_cannot_replace_classifier(self):
+        trusted = Path(__file__).with_name('release-scope.py').read_bytes()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            def git(*args):
+                return subprocess.check_output(['git', *args], cwd=root).decode().strip()
+            git('init', '-q')
+            git('config', 'user.name', 'Fixture')
+            git('config', 'user.email', 'fixture@example.invalid')
+            (root / 'scripts').mkdir()
+            (root / 'scripts/release-scope.py').write_bytes(trusted)
+            (root / 'README.md').write_text('before')
+            git('add', '.')
+            git('commit', '-qm', 'trusted base')
+            base = git('rev-parse', 'HEAD')
+            (root / 'README.md').write_text('after')
+            git('add', '.')
+            git('commit', '-qm', 'prose')
+            prose = git('rev-parse', 'HEAD')
+            (root / 'scripts/release-scope.py').write_text("raise RuntimeError('untrusted HEAD executed')")
+            (root / 'scripts/test-release-scope.py').write_text('# candidate tests cannot authorize release')
+            git('add', '.')
+            git('commit', '-qm', 'tampered candidate')
+            malicious = git('rev-parse', 'HEAD')
+            trusted_file = root / 'trusted.py'
+            trusted_file.write_bytes(subprocess.check_output(['git','show',base+':scripts/release-scope.py'],cwd=root))
+            for head, expected in [(prose,'required=false'),(malicious,'required=true')]:
+                output = root / 'output'
+                output.write_text('')
+                env = dict(os.environ, EVENT='pull_request', BASE_SHA=base, HEAD_SHA=head, GITHUB_OUTPUT=str(output))
+                subprocess.run(['python3', str(trusted_file)], cwd=root, env=env, check=True, stdout=subprocess.PIPE)
+                self.assertEqual(output.read_text().strip(), expected)
 
 if __name__ == '__main__':
     unittest.main()
