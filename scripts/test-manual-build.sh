@@ -21,7 +21,12 @@ if [ "${FAKE_FAIL_ARCH:-}" = "$1" ]; then exit 17; fi
 MOCK
 cat > "$FIXTURE/scripts/publish-scanned-images.sh" <<'MOCK'
 #!/bin/bash
-echo "publish $1 $3" >> "$FAKE_EVENTS"
+set -euo pipefail
+image=$1
+shift 2
+echo "publish $image $*" >> "$FAKE_EVENTS"
+# The version must not advance before publication succeeds.
+[ "$(cat version.txt)" = "${FAKE_EXPECT_VERSION:-1.2.3}" ]
 exit "${FAKE_PUBLISH_EXIT:-0}"
 MOCK
 chmod +x "$FIXTURE/bin/"*
@@ -40,11 +45,13 @@ for stage in audit amd64 arm64 publish; do
 done
 export FAKE_AUDIT_EXIT=0 FAKE_FAIL_ARCH='' FAKE_PUBLISH_EXIT=0
 : > "$FAKE_EVENTS"
-bash "$FIXTURE/build.sh" > "$FIXTURE/output" 2>&1
+# Exercise invocation from outside the repository as well.
+(cd / && bash "$FIXTURE/build.sh") > "$FIXTURE/output" 2>&1
 [ "$(cat "$FIXTURE/version.txt")" = '1.2.4' ]
 [ "$(cat "$FAKE_EVENTS")" = $'audit\nscan amd64\nscan arm64\npublish ghcr.io/kasumil/lotto-nextjs 1.2.4' ]
 ! grep -q ':latest\| latest' "$FAKE_EVENTS"
 grep -q 'Done! Image pushed:' "$FIXTURE/output"
+[ -z "$(find "$FIXTURE" -name 'version.txt.tmp.*' -print)" ]
 printf 'invalid\n' > "$FIXTURE/version.txt"
 : > "$FAKE_EVENTS"
 if bash "$FIXTURE/build.sh" > "$FIXTURE/output" 2>&1; then exit 1; fi

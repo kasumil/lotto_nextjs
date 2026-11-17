@@ -22,6 +22,6 @@ test('both platforms retain full CVE scan, artifact transfer and publication gat
   assert.match(job, /bash scripts\/build-scan-image.sh/);
   assert.match(job, /image-security-\$\{\{ matrix.arch \}\}/);
   assert.match(job, /scanned-release-\$\{\{ matrix.arch \}\}/);
-  assert.match(workflow, /needs: \[verify, image-security\]/);
+  assert.match(workflow, /needs: \[scope, verify, image-security\]/);
   assert.match(workflow, /github.event_name != 'pull_request'/);
 });
