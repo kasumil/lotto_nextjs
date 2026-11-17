@@ -22,7 +22,9 @@ export function SellerPanel({
   const searchRef = useRef<HTMLInputElement>(null);
   const selectedRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => { searchRef.current?.focus(); }, []);
+  useEffect(() => {
+    if (window.matchMedia('(min-width: 768px)').matches) searchRef.current?.focus();
+  }, []);
   useEffect(() => { selectedRef.current?.scrollIntoView({ block: 'nearest' }); }, [selectedKey, sellers]);
 
   return (
@@ -44,7 +46,7 @@ export function SellerPanel({
               value={query}
               onChange={(event) => onQueryChange(event.target.value)}
               placeholder="매장 이름 또는 주소 검색"
-              className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+              className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-blue-600 md:text-sm"
             />
             {query && (
               <button
