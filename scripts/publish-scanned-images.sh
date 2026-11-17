@@ -16,7 +16,23 @@ done
 REMOTE_REPORTS=$(mktemp -d)
 trap 'rm -rf -- "$REMOTE_REPORTS"' EXIT
 read_digest() {
-  docker buildx imagetools inspect "$1" | awk '/^Digest:/ {print $2; exit}'
+  # GHCR can briefly return an error just after creating a tag. Read the
+  # complete response so pipefail cannot turn awk's early exit into SIGPIPE.
+  # Every attempt must still yield a well-formed digest; callers compare it
+  # with the already verified release index before reporting success.
+  local report digest attempt
+  for attempt in 1 2 3 4 5; do
+    if report=$(docker buildx imagetools inspect "$1" 2>/dev/null); then
+      digest=$(printf '%s\n' "$report" | awk '/^Digest:/ && !seen {print $2; seen=1}')
+      if [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+        printf '%s\n' "$digest"
+        return 0
+      fi
+    fi
+    if (( attempt < 5 )); then sleep 2; fi
+  done
+  echo "Could not read registry digest after five attempts" >&2
+  return 1
 }
 sources=()
 platform_digests=()
