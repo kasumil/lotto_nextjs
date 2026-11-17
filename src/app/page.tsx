@@ -19,6 +19,8 @@ const MapComponent = dynamic(() => Promise.resolve(MapPage), {
   loading: () => <div>지도를 불러오는 중...</div>
 });
 
+const PAGE_SIZE = 100;
+
 function MapPage() {
   const mapRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
@@ -27,6 +29,8 @@ function MapPage() {
   const { sellers, status, retry } = useSellers();
   const [visibleSellers, setVisibleSellers] = useState<LottoSeller[]>([]);
   const [query, setQuery] = useState('');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [focusFrom, setFocusFrom] = useState<number | null>(null);
   const [selectedSeller, setSelectedSeller] = useState<LottoSeller | null>(null);
   const [panelOpen, setPanelOpen] = useState(() =>
     typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches);
@@ -35,7 +39,14 @@ function MapPage() {
 
   const closePanel = useCallback(() => {
     setPanelOpen(false);
+    setFocusFrom(null);
     requestAnimationFrame(() => toggleRef.current?.focus());
+  }, []);
+
+  const changeQuery = useCallback((value: string) => {
+    setQuery(value);
+    setVisibleCount(PAGE_SIZE);
+    setFocusFrom(null);
   }, []);
 
   const updateCurrentLocationMarker = useCallback((newLocation: { lat: number; lng: number }) => {
@@ -57,9 +68,9 @@ function MapPage() {
 
   const handleMarkerSelect = useCallback((seller: LottoSeller) => {
     setSelectedSeller(seller);
-    setQuery('');
+    changeQuery('');
     if (window.matchMedia('(min-width: 768px)').matches) setPanelOpen(true);
-  }, []);
+  }, [changeQuery]);
   const { focusSeller, refreshVisible } = useSellerMarkers({
     map, sellers,
     onSelectSeller: handleMarkerSelect,
@@ -69,7 +80,12 @@ function MapPage() {
     () => query.trim() ? searchSellers(sellers, query) : visibleSellers,
     [sellers, query, visibleSellers],
   );
-  const shownSellers = useMemo(() => results.slice(0, 100), [results]);
+  const shownSellers = useMemo(() => results.slice(0, visibleCount), [results, visibleCount]);
+  const loadMore = useCallback(() => {
+    if (visibleCount >= results.length) return;
+    setFocusFrom(visibleCount);
+    setVisibleCount(Math.min(visibleCount + PAGE_SIZE, results.length));
+  }, [visibleCount, results.length]);
 
   const handleListSelect = useCallback((seller: LottoSeller) => {
     if (!map) return;
@@ -134,10 +150,13 @@ function MapPage() {
               sellers={shownSellers}
               total={results.length}
               query={query}
+              focusFrom={focusFrom}
+              pageSize={PAGE_SIZE}
               selectedKey={selectedSeller ? sellerKey(selectedSeller) : null}
               status={status}
               mapReady={Boolean(map)}
-              onQueryChange={setQuery}
+              onQueryChange={changeQuery}
+              onLoadMore={loadMore}
               onSelect={handleListSelect}
               onRetry={retry}
               onClose={closePanel}
