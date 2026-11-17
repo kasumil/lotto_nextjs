@@ -54,9 +54,9 @@ Docker 이미지는 비특권 Node 사용자로 Next.js를 직접 실행합니�
 
 ## 배포
 
-- PR은 앱·의존성·두 아키텍처 이미지 검사를 실행하며 이미지를 게시하지 않습니다.
-- `main`은 모든 검사를 통과한 **동일 이미지 아카이브**를 GHCR에 커밋 SHA, 실행 번호, `latest`로 게시합니다. 다시 빌드한 미검사 이미지를 게시하지 않습니다.
-- 수동 `bash build.sh`는 검사한 이미지의 새 버전 태그만 게시합니다. `latest`는 변경하지 않으며 게시 성공 뒤에만 버전 파일을 갱신합니다. publisher는 동시에 실행하지 않습니다.
+- PR은 이미지를 게시하지 않습니다. 신뢰할 대상 base의 분류기가 `README.md` 또는 `docs/deployment.md`만 바뀌었다고 확인한 경우에만 앱·의존성·두 아키텍처 이미지 검사를 생략합니다. 분류기가 없거나 비교·입력이 불확실한 경우와 코드·보안 설정 변경은 전체 검사를 실행합니다.
+- `main` push도 같은 분류 기준을 적용합니다. 전체 검사가 필요한 변경은 통과한 **동일 이미지 아카이브**를 GHCR에 커밋 SHA, 실행 번호, `latest`로 게시합니다. 검증된 문서 변경만 있으면 이미지 게시를 생략하며, 다시 빌드한 미검사 이미지를 게시하지 않습니다.
+- 수동 `bash build.sh`는 검사한 이미지의 새 버전 태그만 게시합니다. `latest`는 변경하지 않으며 게시 성공 뒤에만 버전 파일을 갱신합니다. publisher는 동시에 실행하지 않아야 합니다. 스크립트의 주석은 실행 잠금이 아니며 Actions의 concurrency도 로컬 실행을 직렬화하지 않습니다.
 - 지도용 JavaScript 키는 실행 시 `NEXT_PUBLIC_KAKAO_MAP_API_KEY`로 전달합니다. 빌드용 Actions 변수를 요구하지 않습니다.
 - 실제 설치·전환 전에는 [배포 및 Compose 전환 검토](docs/deployment.md)와 [보안 검사](docs/security.md)를 확인하세요. `latest` 감시가 활성화된 환경에서는 main 게시가 운영 재시작으로 이어질 수 있습니다.
 
@@ -78,10 +78,10 @@ MIT License
 - Next.js 16.4.1, React 19.2.6과 Node 22 기반 이미지를 사용합니다.
 - `npm ci`, `npm run lint`, `npm run build`, `npm audit --omit=dev`로 검증합니다.
 - 지도 키는 Docker 실행 시 환경변수로 주입합니다. `NEXT_PUBLIC_KAKAO_MAP_API_KEY`에 지정된 Kakao Maps JavaScript 키만 서버에서 읽습니다. 일반 앱 키 이름이나 REST API·Admin·네이티브 키로 자동 대체하지 않습니다. 기존 다른 이름의 값은 Kakao Maps용 JavaScript 키인지 확인한 뒤 이 지도 전용 변수에 매핑합니다. 빌드할 때 키를 넣거나 GitHub Actions 변수를 새로 만들 필요가 없습니다. 공개 브라우저 키이므로 Kakao에서 서비스 도메인 제한을 설정하고 실제 값을 저장소에 기록하지 않습니다. SDK는 한 번만 로드하고 준비된 뒤 지도를 생성합니다.
-- main 반영 후 GHCR에 latest 및 커밋 SHA 태그를 게시합니다. NAS가 이전 고정 태그 `1.0.13`을 사용하면 latest 이미지 게시만으로 갱신되지 않습니다. 검증된 새 SHA/digest로 전환하고 실제 컨테이너 버전을 확인해야 합니다.
+- 이미지 검사가 필요한 main 변경이 모든 검사를 통과하면 GHCR에 latest 및 커밋 SHA 태그를 게시합니다. 검증된 문서 변경만 있으면 게시를 생략합니다. NAS의 현재 실행 이미지는 별도로 확인하고, 새 릴리스 전환 뒤 실제 컨테이너 버전을 검증해야 합니다.
 - 런타임은 비특권 node 사용자로 4100 포트에서 직접 Next.js를 실행하며 개발 의존성과 전역 PM2를 이미지에 포함하지 않습니다.
 - 개발용 TypeScript ESLint 경로의 minimatch는 보안 패치 11.0.1로 제한 교체했습니다. `npm run security:audit`가 전체/운영 lockfile을 모두 검사하고 Low 이상 또는 검사 오류가 있으면 실패합니다.
-- Docker 런타임은 npm/npx/yarn을 제거하고 zlib 보안 패치를 적용합니다. CI와 수동 `build.sh`는 amd64/arm64의 실제 이미지 아카이브를 Trivy로 검사하고, 모든 심각도의 CVE가 0개일 때만 동일 아카이브를 게시합니다. 자세한 절차와 한계는 [보안 검사](docs/security.md)를 참고하세요.
+- Docker 런타임은 npm/npx/yarn을 제거하고 zlib 보안 패치를 적용합니다. 이미지 검사가 필요한 CI 실행과 수동 `build.sh`는 amd64/arm64의 실제 이미지 아카이브를 Trivy로 검사하고, 모든 심각도의 CVE가 0개일 때만 동일 아카이브를 게시합니다. 자세한 절차와 한계는 [보안 검사](docs/security.md)를 참고하세요.
 
 
 ## 공개 판매점 데이터 캐시
