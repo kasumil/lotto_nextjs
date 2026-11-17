@@ -1,3 +1,5 @@
+import { normalizeSellerText } from './seller-text.ts';
+
 export interface LottoSeller {
   RTLRID?: string;
   BPLCDORODTLADRES: string;
@@ -35,5 +37,7 @@ export function createSellerCache(
 export const sellerCache = createSellerCache(async () => {
   const response = await fetch('/lotto-sellers-map.json', { credentials: 'omit', cache: 'no-cache' });
   if (!response.ok) throw new Error('Public seller data request failed');
-  return response.json();
+  const rows = await response.json();
+  if (!Array.isArray(rows)) throw new Error('Invalid public seller data');
+  return rows.map((row: LottoSeller) => normalizeSellerText(row));
 });
