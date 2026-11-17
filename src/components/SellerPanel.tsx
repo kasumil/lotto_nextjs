@@ -6,26 +6,35 @@ interface SellerPanelProps {
   sellers: LottoSeller[];
   total: number;
   query: string;
+  focusFrom: number | null;
+  pageSize: number;
   selectedKey: string | null;
   status: 'loading' | 'ready' | 'error';
   mapReady: boolean;
   onQueryChange: (value: string) => void;
+  onLoadMore: () => void;
   onSelect: (seller: LottoSeller) => void;
   onRetry: () => void;
   onClose: () => void;
 }
 
 export function SellerPanel({
-  sellers, total, query, selectedKey, status, mapReady,
-  onQueryChange, onSelect, onRetry, onClose,
+  sellers, total, query, focusFrom, pageSize, selectedKey, status, mapReady,
+  onQueryChange, onLoadMore, onSelect, onRetry, onClose,
 }: SellerPanelProps) {
   const searchRef = useRef<HTMLInputElement>(null);
   const selectedRef = useRef<HTMLButtonElement>(null);
+  const firstNewRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (window.matchMedia('(min-width: 768px)').matches) searchRef.current?.focus();
   }, []);
   useEffect(() => { selectedRef.current?.scrollIntoView({ block: 'nearest' }); }, [selectedKey, sellers]);
+  useEffect(() => {
+    if (focusFrom === null) return;
+    if (firstNewRef.current?.disabled) searchRef.current?.focus();
+    else firstNewRef.current?.focus();
+  }, [focusFrom, sellers.length]);
 
   return (
     <aside
@@ -61,7 +70,7 @@ export function SellerPanel({
         {status === 'ready' && (
           <p className="mt-3 text-sm text-gray-600" aria-live="polite">
             {query.trim() ? '검색 결과' : '현재 지도'} {total.toLocaleString('ko-KR')}곳
-            {total > sellers.length ? ` · 처음 ${sellers.length}곳 표시` : ''}
+            {total > 0 && ` · ${sellers.length.toLocaleString('ko-KR')}곳 표시${total === sellers.length ? ' (모두 표시)' : ''}`}
           </p>
         )}
       </div>
@@ -83,14 +92,14 @@ export function SellerPanel({
           </p>
         )}
         {status === 'ready' && sellers.length > 0 && (
-          <ul className="space-y-1" aria-label="판매점 검색 결과">
-            {sellers.map((seller) => {
+          <ul id="seller-results" className="space-y-1" aria-label="판매점 검색 결과">
+            {sellers.map((seller, index) => {
               const key = sellerKey(seller);
               const selected = key === selectedKey;
               return (
                 <li key={key}>
                   <button
-                    ref={selected ? selectedRef : undefined}
+                    ref={index === focusFrom ? firstNewRef : selected ? selectedRef : undefined}
                     type="button"
                     disabled={!mapReady}
                     onClick={() => onSelect(seller)}
@@ -105,6 +114,16 @@ export function SellerPanel({
               );
             })}
           </ul>
+        )}
+        {status === 'ready' && total > sellers.length && (
+          <button
+            type="button"
+            onClick={onLoadMore}
+            aria-controls="seller-results"
+            className="mt-3 min-h-11 w-full rounded-lg border border-gray-300 px-3 py-2 font-medium hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-blue-600"
+          >
+            더 보기 (다음 {Math.min(pageSize, total - sellers.length).toLocaleString('ko-KR')}곳)
+          </button>
         )}
       </div>
     </aside>
