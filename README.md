@@ -15,7 +15,7 @@
 - TypeScript
 - Kakao Maps API
 - Tailwind CSS
-- PM2 (프로덕션 환경)
+- Node.js 직접 실행 (Docker 프로덕션 런타임)
 
 ## 시작하기
 
@@ -29,7 +29,7 @@ cd lotto_nextjs
 
 2. 의존성 설치
 ```bash
-npm install
+npm ci
 ```
 
 3. 환경 변수 설정
@@ -43,29 +43,22 @@ NEXT_PUBLIC_KAKAO_MAP_API_KEY=your_kakao_map_api_key
 npm run dev
 ```
 
-### 프로덕션 환경 설정
+### 로컬 프로덕션 확인
 
-1. 빌드
 ```bash
 npm run build
+npm run start -- --port 4100
 ```
 
-2. PM2로 실행
-```bash
-pm2 start ecosystem.config.js
-```
+Docker 이미지는 비특권 Node 사용자로 Next.js를 직접 실행합니다. 전역 PM2 설치나 PM2 배포 명령은 현재 이미지 경로에 필요하지 않습니다.
 
 ## 배포
 
-1. Vercel 배포
-```bash
-vercel
-```
-
-2. PM2 배포
-```bash
-pm2 deploy ecosystem.config.js production
-```
+- PR은 이미지를 게시하지 않습니다. 신뢰할 대상 base의 분류기가 `README.md` 또는 `docs/deployment.md`만 바뀌었다고 확인한 경우에만 앱·의존성·두 아키텍처 이미지 검사를 생략합니다. 분류기가 없거나 비교·입력이 불확실한 경우와 코드·보안 설정 변경은 전체 검사를 실행합니다.
+- `main` push도 같은 분류 기준을 적용합니다. 전체 검사가 필요한 변경은 통과한 **동일 이미지 아카이브**를 GHCR에 커밋 SHA, 실행 번호, `latest`로 게시합니다. 검증된 문서 변경만 있으면 이미지 게시를 생략하며, 다시 빌드한 미검사 이미지를 게시하지 않습니다.
+- 수동 `bash build.sh`는 검사한 이미지의 새 버전 태그만 게시합니다. `latest`는 변경하지 않으며 게시 성공 뒤에만 버전 파일을 갱신합니다. publisher는 동시에 실행하지 않아야 합니다. 스크립트의 주석은 실행 잠금이 아니며 Actions의 concurrency도 로컬 실행을 직렬화하지 않습니다.
+- 지도용 JavaScript 키는 실행 시 `NEXT_PUBLIC_KAKAO_MAP_API_KEY`로 전달합니다. 빌드용 Actions 변수를 요구하지 않습니다.
+- 실제 설치·전환 전에는 [배포 및 Compose 전환 검토](docs/deployment.md)와 [보안 검사](docs/security.md)를 확인하세요. `latest` 감시가 활성화된 환경에서는 main 게시가 운영 재시작으로 이어질 수 있습니다.
 
 ## 라이선스
 
@@ -79,8 +72,6 @@ MIT License
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-
-docker buildx build --platform=linux/amd64,linux/arm64 -t ghcr.io/kasumil/lotto-nextjs:1.0.0 .
 
 ## 보안 패치 및 GHCR 배포
 
