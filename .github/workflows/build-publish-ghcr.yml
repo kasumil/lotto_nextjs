@@ -74,6 +74,7 @@ jobs:
       - run: npm run security:audit
       - run: npm run lint
       - run: npm run test:seller-cache
+      - run: npm run test:store-search
       - run: bash scripts/test-manual-build.sh
       - run: npm run build
       - name: Retain dependency reports, including failures
