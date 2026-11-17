@@ -11,7 +11,7 @@
 
 ## 기술 스택
 
-- Next.js 16.4.1
+- Next.js 16.4.6
 - TypeScript
 - Kakao Maps API
 - Tailwind CSS
@@ -75,7 +75,7 @@ MIT License
 
 ## 보안 패치 및 GHCR 배포
 
-- Next.js 16.4.1, React 19.2.6과 Node 22 기반 이미지를 사용합니다.
+- Next.js 16.4.6, React 19.2.6과 Node 22 기반 이미지를 사용합니다.
 - `npm ci`, `npm run lint`, `npm run build`, `npm audit --omit=dev`로 검증합니다.
 - 지도 키는 Docker 실행 시 환경변수로 주입합니다. `NEXT_PUBLIC_KAKAO_MAP_API_KEY`에 지정된 Kakao Maps JavaScript 키만 서버에서 읽습니다. 일반 앱 키 이름이나 REST API·Admin·네이티브 키로 자동 대체하지 않습니다. 기존 다른 이름의 값은 Kakao Maps용 JavaScript 키인지 확인한 뒤 이 지도 전용 변수에 매핑합니다. 빌드할 때 키를 넣거나 GitHub Actions 변수를 새로 만들 필요가 없습니다. 공개 브라우저 키이므로 Kakao에서 서비스 도메인 제한을 설정하고 실제 값을 저장소에 기록하지 않습니다. SDK는 한 번만 로드하고 준비된 뒤 지도를 생성합니다.
 - 이미지 검사가 필요한 main 변경이 모든 검사를 통과하면 GHCR에 latest 및 커밋 SHA 태그를 게시합니다. 검증된 문서 변경만 있으면 게시를 생략합니다. NAS의 현재 실행 이미지는 별도로 확인하고, 새 릴리스 전환 뒤 실제 컨테이너 버전을 검증해야 합니다.
