@@ -98,6 +98,7 @@ declare global {
 
 export interface KakaoMap {
   setCenter: (latlng: LatLng) => void;
+  relayout: () => void;
   getBounds: () => {
     getSouthWest: () => LatLng;
     getNorthEast: () => LatLng;
@@ -125,4 +126,4 @@ export interface KakaoMarkerClusterer {
 export interface MarkerImage {
   src: string;
   size: Size;
-} 
+}
