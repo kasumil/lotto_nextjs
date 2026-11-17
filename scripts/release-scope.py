@@ -14,13 +14,21 @@ def prose_only(raw):
     if not fields or len(fields) % 2:
         return False
     for header, path in zip(fields[::2], fields[1::2]):
-        parts = header.split()
-        if len(parts) != 5 or not parts[0].startswith(b':'):
+        match = re.fullmatch(
+            rb':(000000|100644) (000000|100644) ([0-9a-f]{40}) ([0-9a-f]{40}) ([AMD])',
+            header)
+        if match is None or path not in PROSE:
             return False
-        old, new = parts[0][1:], parts[1]
-        if old not in (b'000000', b'100644') or new not in (b'000000', b'100644'):
+        old, new, old_id, new_id, status = match.groups()
+        modes = {b'A': (b'000000', b'100644'),
+                 b'M': (b'100644', b'100644'),
+                 b'D': (b'100644', b'000000')}
+        if (old, new) != modes[status]:
             return False
-        if parts[4] not in (b'A', b'M', b'D') or path not in PROSE:
+        zero = b'0' * 40
+        if (old_id == zero) != (old == b'000000') or (new_id == zero) != (new == b'000000'):
+            return False
+        if status == b'M' and old_id == new_id:
             return False
     return True
 
@@ -31,7 +39,7 @@ def required(event, base, head):
     if any(not re.fullmatch('[0-9a-f]{40}', s or '') or set(s) == {'0'} for s in (base, head)):
         return True
     try:
-        result = subprocess.run(['git', 'diff', '--raw', '--no-renames', '-z', base, head],
+        result = subprocess.run(['git', 'diff', '--raw', '--no-abbrev', '--no-renames', '-z', base, head],
                                 check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return not prose_only(result.stdout)
     except (OSError, subprocess.CalledProcessError):
