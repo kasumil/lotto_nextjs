@@ -58,7 +58,7 @@ function MapPage() {
   const handleMarkerSelect = useCallback((seller: LottoSeller) => {
     setSelectedSeller(seller);
     setQuery('');
-    setPanelOpen(true);
+    if (window.matchMedia('(min-width: 768px)').matches) setPanelOpen(true);
   }, []);
   const { focusSeller, refreshVisible } = useSellerMarkers({
     map, sellers,
