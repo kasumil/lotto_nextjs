@@ -17,11 +17,11 @@
 
 과거 예제는 `4100:4100`으로 모든 호스트 주소에 직접 포트를 열고 기존 컨테이너를 먼저 중단하도록 안내했습니다. 운영 전환에서 확인한 형태는 앱 포트를 loopback에만 바인딩하고 기존 reverse proxy가 이를 전달하는 방식입니다. 이 예제를 그대로 가져오면 다른 서비스의 호스트 포트와 충돌하거나 기존 접근 제한을 우회하고 순단을 만들 수 있습니다.
 
-Compose로 선언적 관리를 추가하는 기능 자체는 유용하지만 아직 별도 마이그레이션 작업입니다. 다음을 확인하기 전에는 실행 가능한 배포 파일을 추가하지 않습니다.
+저장소의 `deploy/lotto.compose.fragment.yaml`은 현재 main을 기준으로 정리한 검토 후보입니다. 실제 마이그레이션은 다음 조건을 충족한 뒤 수행합니다.
 
 - 기존 Compose 프로젝트의 소유권과 서비스 이름을 확인해 중복 앱을 생성하지 않기
 - 정확한 external network 및 프록시 upstream 식별자를 보존하기
-- 앱의 직접 `ports` 게시를 추가하지 않기 (`expose`는 호스트 게시가 아니지만 접근 제어도 아님)
+- 앱 포트의 기존 루프백 바인딩 `127.0.0.1:4102`를 보존하고, 외부 바인딩을 추가하지 않기
 - 새 digest와 런타임 환경변수 매핑, 기존 restart 정책을 보존하기
 - 이미지 healthcheck를 활용하고 프록시 전환·복구 절차를 함께 검증하기
 
@@ -36,3 +36,22 @@ Compose로 선언적 관리를 추가하는 기능 자체는 유용하지만 아
 - PR #12를 도입하는 변경 자체는 workflow와 분류기 코드를 포함하므로 전체 검사가 필요합니다. 신뢰할 base에 분류기가 없거나 입력/비교가 불확실하면 전체 검사를 수행합니다. 수동 workflow 실행 역시 전체 검사 대상입니다.
 
 PR #12의 신뢰 기준은 PR의 target base SHA 또는 push 직전 main ref (`github.event.before`)입니다. 이전 main ref는 배포 성공이나 현재 실행 digest를 증명하지 않습니다. 운영 배포 이력과 현재 digest는 별도로 확인해야 합니다.
+
+## PR #3 기반 Compose 후보의 오프라인 검증
+
+후보는 로컬에 이미 적재되어 검증된 Linux amd64 이미지 config ID를 사용합니다.
+기존 운영 확인에 기록된 config ID는 `sha256:b8d4f86bf8ec78d10782ad21582658ab0148ab09e92fdcc61fdc7196dc3e3ba7`입니다.
+현재 운영 이미지와 환경에 맞는 값인지 실제 적용 전에 별도로 확인합니다. 이 config ID를 레지스트리 manifest digest로 사용하지 않습니다.
+서비스 이미지는 이 후보에서 정확한 config ID로 고정합니다. 확인 변수에는 기본값이 없고, 태그나 다른 ID를 넣으면 사전 검증이 거부합니다. 변수는 고정된 서비스 이미지를 덮어쓸 수 없습니다.
+
+```sh
+LOTTO_IMAGE_CONFIG_ID=b8d4f86bf8ec78d10782ad21582658ab0148ab09e92fdcc61fdc7196dc3e3ba7 \
+  bash scripts/check-lotto-compose.sh
+LOTTO_IMAGE_CONFIG_ID=b8d4f86bf8ec78d10782ad21582658ab0148ab09e92fdcc61fdc7196dc3e3ba7 \
+  docker compose --env-file /dev/null -f deploy/lotto.compose.fragment.yaml config --quiet
+```
+
+CI는 키 없이 빌드하는 현재 main 계약을 유지합니다. 새 검사는
+`NEXT_PUBLIC_KAKAO_MAP_API_KEY`가 비어 있을 때 실행 시 설정해야 지도가 활성화된다는 진단을 확인합니다.
+실제 키는 런타임에서만 전달하며 예제, CI 검사, 이미지에는 포함하지 않습니다.
+위 명령은 구성을 해석할 뿐이며 실행 중인 4102 컨테이너의 소유권, 연결, 지도, 원복은 실제 재기동 전에 별도로 대조합니다.
