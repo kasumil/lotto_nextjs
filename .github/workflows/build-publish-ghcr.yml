@@ -68,6 +68,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: python3 scripts/test-release-scope.py
+      - name: Verify Compose and Kakao Maps runtime configuration contract
+        env:
+          LOTTO_IMAGE_CONFIG_ID: "b8d4f86bf8ec78d10782ad21582658ab0148ab09e92fdcc61fdc7196dc3e3ba7"
+        run: |
+          unset NEXT_PUBLIC_KAKAO_MAP_API_KEY
+          bash scripts/check-lotto-compose.sh
+          python3 -B scripts/test-lotto-compose.py
       - run: npm ci
       - run: npm run test:security
       - run: node --test scripts/test-native-image-runners.mjs
