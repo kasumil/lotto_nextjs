@@ -1,0 +1,107 @@
+name: Lotto PR3 verification only
+
+on:
+  push:
+    branches:
+      - codex/lotto-pr3-verify-20261125
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: lotto-pr3-review-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/lotto-pr3-verify-20261125'
+    name: App and dependency security
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: python3 scripts/test-release-scope.py
+      - name: Verify Compose and Kakao Maps runtime configuration contract
+        env:
+          LOTTO_IMAGE_CONFIG_ID: "b8d4f86bf8ec78d10782ad21582658ab0148ab09e92fdcc61fdc7196dc3e3ba7"
+        run: |
+          unset NEXT_PUBLIC_KAKAO_MAP_API_KEY
+          bash scripts/check-lotto-compose.sh
+          python3 -B scripts/test-lotto-compose.py
+      - run: npm ci
+      - run: npm run test:security
+      - run: node --test scripts/test-native-image-runners.mjs
+      - run: npm run security:audit
+      - run: npm run lint
+      - run: npm run test:seller-cache
+      - run: npm run test:store-search
+      - run: bash scripts/test-manual-build.sh
+      - run: npm run build
+      - name: Retain dependency reports, including failures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: dependency-security-reports
+          path: security-reports/
+          if-no-files-found: warn
+          retention-days: 14
+
+  image-security:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/lotto-pr3-verify-20261125'
+    name: Image CVEs (${{ matrix.arch }}, all severities)
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      # Build native images: ARM Node/npm must not execute through QEMU.
+      - name: Verify native runner architecture
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          case "$ARCH:$(uname -m)" in
+            amd64:x86_64|arm64:aarch64) ;;
+            *) echo "Runner architecture does not match $ARCH" >&2; exit 1 ;;
+          esac
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
+        with:
+          version: v0.76.2
+          cache: false
+      - name: Build and scan the exact release archive, without publishing
+        env:
+          ARCH: ${{ matrix.arch }}
+          REVISION: ${{ github.sha }}
+        run: bash scripts/build-scan-image.sh "$ARCH" "$RUNNER_TEMP/release/$ARCH" "$REVISION"
+      - name: Retain complete CVE reports, including failures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: image-security-${{ matrix.arch }}
+          path: |
+            ${{ runner.temp }}/release/${{ matrix.arch }}/trivy-*.json
+            ${{ runner.temp }}/release/${{ matrix.arch }}/trivy-*.txt
+          if-no-files-found: warn
+          retention-days: 14
