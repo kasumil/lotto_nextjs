@@ -1,0 +1,21 @@
+# Reviewed candidate for the existing NAS proxy contract. Validate before use.
+services:
+  lotto:
+    image: "sha256:b8d4f86bf8ec78d10782ad21582658ab0148ab09e92fdcc61fdc7196dc3e3ba7"
+    platform: linux/amd64
+    ports:
+      - "127.0.0.1:4102:4100"
+    environment:
+      NEXT_PUBLIC_KAKAO_MAP_API_KEY: "${NEXT_PUBLIC_KAKAO_MAP_API_KEY:-}"
+    restart: unless-stopped
+    pull_policy: never
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      com.kasumil.lotto.reviewed-image-config-id: "${LOTTO_IMAGE_CONFIG_ID:?Set LOTTO_IMAGE_CONFIG_ID to the verified local image config ID (64 lowercase hex digits)}"
+    networks:
+      - kasumil-platform
+
+networks:
+  kasumil-platform:
+    external: true
+    name: kasumil-platform_default
